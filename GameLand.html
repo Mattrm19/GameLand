@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameLand - Tienda de Videojuegos</title>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    :root {
+      --primary: #7b2cbf;
+      --secondary: #00f5d4;
+      --accent: #f72585;
+      --dark: #0d0d1a;
+      --card-bg: #1a1a2e;
+      --text: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #16213e 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .navbar {
+      background: rgba(13, 13, 26, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(123, 44, 191, 0.3);
+      padding: 0.8rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 1000;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .logo-text {
+      font-size: 1.6rem; font-weight: 800;
+      background: linear-gradient(90deg, #00f5d4, #7b2cbf, #f72585);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 1.2rem; align-items: center; }
+    .nav-btn {
+      background: transparent; border: none; color: var(--text);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 8px;
+      padding: 0.5rem 1rem; border-radius: 8px; transition: all 0.25s;
+    }
+    .nav-btn:hover, .nav-btn.active {
+      background: rgba(123, 44, 191, 0.25); color: var(--secondary);
+    }
+    .cart-badge {
+      background: var(--accent); color: white; font-size: 0.7rem;
+      padding: 2px 7px; border-radius: 50%; margin-left: 4px;
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .section-title {
+      font-size: 1.8rem; margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .carousel {
+      position: relative; height: 340px; border-radius: 20px; overflow: hidden;
+      margin-bottom: 2.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .carousel-slide {
+      position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease;
+      background-size: cover; background-position: center;
+      display: flex; align-items: flex-end;
+    }
+    .carousel-slide.active { opacity: 1; }
+    .carousel-content {
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      width: 100%; padding: 2rem; color: white;
+    }
+    .carousel-content h2 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .carousel-btn {
+      background: var(--secondary); color: #0d0d1a; border: none;
+      padding: 0.7rem 1.5rem; border-radius: 50px; font-weight: 700; cursor: pointer;
+    }
+    .carousel-dots {
+      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.4);
+      cursor: pointer;
+    }
+    .dot.active { background: var(--secondary); transform: scale(1.3); }
+
+    .offers-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    .offer-card {
+      background: var(--card-bg); border-radius: 16px; overflow: hidden;
+      border: 1px solid rgba(123, 44, 191, 0.25); transition: transform 0.3s;
+    }
+    .offer-card:hover { transform: translateY(-6px); }
+    .offer-img { width: 100%; height: 160px; object-fit: cover; background: #111; }
+    .offer-body { padding: 1.2rem; }
+    .offer-platform {
+      display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      background: rgba(0,0,0,0.4); padding: 4px 12px; border-radius: 50px;
+      font-size: 0.8rem; margin-bottom: 0.8rem;
+    }
+    .offer-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.6rem; }
+    .price-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .old-price { text-decoration: line-through; color: #888; font-size: 0.95rem; }
+    .discount { background: #f72585; color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; }
+    .new-price { font-size: 1.4rem; font-weight: 800; color: var(--secondary); }
+    .btn-offer {
+      width: 100%; background: linear-gradient(90deg, #ff6b35, #f72585);
+      border: none; color: white; padding: 0.8rem; border-radius: 10px;
+      font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    .upcoming-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.2rem;
+      margin-bottom: 3rem;
+    }
+    .upcoming-card {
+      background: var(--card-bg); border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(123, 44, 191, 0.2);
+    }
+    .upcoming-img { width: 100%; height: 140px; object-fit: cover; }
+    .upcoming-body { padding: 1rem; }
+    .upcoming-date { font-size: 0.8rem; color: var(--secondary); margin-bottom: 0.4rem; }
+
+    .faq-section {
+      background: var(--card-bg); border-radius: 16px; padding: 2rem;
+      border: 1px solid rgba(123, 44, 191, 0.2); margin-top: 2rem;
+    }
+    .faq-item { margin-bottom: 1.5rem; }
+    .faq-item h3 { color: var(--secondary); margin-bottom: 0.4rem; }
+
+    .platforms { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 2rem; }
+    .platform-btn {
+      background: var(--card-bg); border: 1px solid rgba(123, 44, 191, 0.4);
+      color: var(--text); padding: 0.6rem 1.2rem; border-radius: 50px; cursor: pointer;
+    }
+    .platform-btn:hover, .platform-btn.active {
+      background: var(--primary); border-color: var(--secondary); color: white;
+    }
+    .games-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem;
+    }
+    .game-card {
+      background: var(--card-bg); border-radius: 16px; overflow: hidden;
+      border: 1px solid rgba(123, 44, 191, 0.2); transition: transform 0.3s;
+    }
+    .game-card:hover { transform: translateY(-8px); }
+    .game-img { width: 100%; height: 180px; object-fit: cover; background: #111; }
+    .game-info { padding: 1rem; }
+    .game-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .game-price { color: var(--secondary); font-weight: 700; margin-bottom: 0.8rem; }
+    .btn-add {
+      width: 100%; background: linear-gradient(90deg, var(--primary), #9d4edd);
+      border: none; color: white; padding: 0.7rem; border-radius: 10px;
+      cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    .login-container {
+      min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 2rem;
+    }
+    .login-card {
+      background: white; color: #222; border-radius: 16px; padding: 2.5rem;
+      width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .login-card h2 { text-align: center; margin-bottom: 1.8rem; }
+    .login-card label { display: block; margin-bottom: 0.4rem; font-weight: 600; }
+    .login-card input {
+      width: 100%; padding: 0.8rem 1rem; border: 1px solid #ccc; border-radius: 10px;
+      margin-bottom: 0.4rem; font-size: 1rem;
+    }
+    .error-text { color: #e11d48; font-size: 0.8rem; margin-bottom: 0.8rem; }
+    .btn-login {
+      width: 100%; background: #7b2cbf; color: white; border: none;
+      padding: 0.9rem; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 0.5rem;
+    }
+
+    .cart-empty { text-align: center; padding: 4rem 1rem; color: #888; }
+    .cart-item {
+      display: flex; gap: 1.2rem; background: var(--card-bg); padding: 1rem;
+      border-radius: 12px; margin-bottom: 1rem; align-items: center;
+    }
+    .cart-item img { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; }
+    .cart-details { flex: 1; }
+    .qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 0.5rem; }
+    .qty-btn {
+      width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--primary);
+      background: transparent; color: var(--text); cursor: pointer;
+    }
+    .remove-btn { background: transparent; border: none; color: #f87171; cursor: pointer; font-size: 1.2rem; }
+    .cart-summary {
+      background: var(--card-bg); padding: 1.5rem; border-radius: 14px; margin-top: 1.5rem;
+    }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.6rem; }
+    .total-row {
+      font-size: 1.3rem; font-weight: 700; color: var(--secondary);
+      border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.8rem; margin-top: 0.8rem;
+    }
+    .btn-checkout {
+      width: 100%; margin-top: 1.2rem; background: linear-gradient(90deg, #00f5d4, #7b2cbf);
+      border: none; color: #0d0d1a; padding: 1rem; border-radius: 12px; font-weight: 700; cursor: pointer;
+    }
+
+    .payment-form {
+      background: var(--card-bg); padding: 2rem; border-radius: 16px;
+      max-width: 480px; margin: 0 auto;
+    }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; color: #aaa; }
+    .form-group input {
+      width: 100%; padding: 0.85rem 1rem; border-radius: 10px;
+      border: 1px solid rgba(123, 44, 191, 0.4); background: #0d0d1a; color: white;
+    }
+    .btn-pay {
+      width: 100%; padding: 1rem; border: none; border-radius: 12px;
+      font-weight: 700; cursor: pointer; background: linear-gradient(90deg, #4ade80, #22c55e);
+      color: #0d0d1a; margin-top: 1rem;
+    }
+
+    .profile-card {
+      background: var(--card-bg); border-radius: 16px; padding: 2rem; text-align: center;
+    }
+    .order-item {
+      background: #0d0d1a; padding: 1rem; border-radius: 10px; margin-top: 1rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .status { padding: 0.3rem 0.8rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; }
+    .status.proceso { background: #854d0e; color: #fbbf24; }
+
+    footer {
+      background: #0a0a14; border-top: 1px solid rgba(123, 44, 191, 0.2);
+      padding: 2.5rem 1.5rem; margin-top: 4rem; text-align: center;
+    }
+    .footer-links { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .footer-links a { color: #aaa; text-decoration: none; }
+
+    @media (max-width: 768px) {
+      .navbar { flex-direction: column; gap: 1rem; }
+      .nav-links { width: 100%; justify-content: space-around; }
+      .games-grid, .offers-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+      .carousel { height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const CAROUSEL = [
+      { title: "Ofertas de la semana", desc: "Hasta 50% de descuento en títulos seleccionados", image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=1200", btn: "Ver ofertas" },
+      { title: "Próximos lanzamientos", desc: "GTA VI, Metroid Prime 4 y más", image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200", btn: "Ver próximamente" },
+      { title: "Juegos digitales", desc: "Descarga inmediata después de la compra", image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=1200", btn: "Explorar catálogo" }
+    ];
+
+    const OFFERS = [
+      { id: 1, title: "Hollow Knight: Silksong", platform: "Steam", oldPrice: 399, newPrice: 259, discount: 35, image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1030300/header.jpg" },
+      { id: 2, title: "Elden Ring", platform: "Steam", oldPrice: 1199, newPrice: 799, discount: 33, image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg" },
+      { id: 3, title: "God of War Ragnarök", platform: "PlayStation", oldPrice: 1399, newPrice: 999, discount: 29, image: "https://i.blogs.es/eadb27/1366_2000/1200_630.jpeg" },
+      { id: 4, title: "Mario Kart 8 Deluxe", platform: "Nintendo Switch", oldPrice: 1199, newPrice: 899, discount: 25, image: "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000000153/de697f487a36d802dd9a5ff0341f717c8486221f2f1219b675af37aca63bc453" },
+      { id: 5, title: "Halo Infinite", platform: "Xbox", oldPrice: 999, newPrice: 499, discount: 50, image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1240440/header.jpg" },
+      { id: 6, title: "Cyberpunk 2077", platform: "Steam", oldPrice: 999, newPrice: 499, discount: 50, image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/header.jpg" }
+    ];
+
+    const UPCOMING = [
+      { id: 1, title: "Grand Theft Auto VI", platform: "PlayStation / Xbox", date: "Otoño 2026", image: "https://cdn-3.expansion.mx/dims4/default/aa897e3/2147483647/strip/true/crop/784x442+0+0/resize/1200x677!/format/webp/quality/70/?url=https%3A%2F%2Fcdn-3.expansion.mx%2Fae%2F2f%2F4baf06a94938ba18c50d9adf29f2%2Fgran-theft-auto-6-lanzamiento-retrasos.png" },
+      { id: 2, title: "The Elder Scrolls VI", platform: "Xbox / PC", date: "2027", image: "https://storegamesvenezuela.com/files/images/noticias/1749600902_1.webp" },
+      { id: 3, title: "Metroid Prime 4", platform: "Nintendo Switch", date: "2026", image: "https://assets.nintendo.com/image/upload/c_fill,w_1200/q_auto:best/f_auto/dpr_2.0/store/software/switch2/70010000104849/6bc40d5d63f7139f26f29c3d0d9b82dbcbae85e2bebcd2995d39c991e665c802" },
+      { id: 4, title: "Death Stranding 2", platform: "PlayStation", date: "2026", image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3280350/6270c77b0729e2df0a17d660286eeddfd9169386/header.jpg?t=1774022345" }
+    ];
+
+    const ALL_GAMES = [
+      // Nintendo Switch
+      { id: 101, title: "Mario Kart 8 Deluxe", price: 899, platform: "Nintendo Switch", image: "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000000153/de697f487a36d802dd9a5ff0341f717c8486221f2f1219b675af37aca63bc453", onSale: true },
+      { id: 102, title: "The Legend of Zelda: Tears of the Kingdom", price: 1399, platform: "Nintendo Switch", image: "https://zeldacentral.com/wp-content/uploads/2025/03/Tears-of-the-Kingdom-wallpaper.jpg" },
+      { id: 103, title: "Super Mario Odyssey", price: 1099, platform: "Nintendo Switch", image: "https://assets.nintendo.com/image/upload/c_fill,w_1200/q_auto:best/f_auto/dpr_2.0/store/software/switch/70010000001130/c42553b4fd0312c31e70ec7468c6c9bccd739f340152925b9600631f2d29f8b5" },
+      { id: 104, title: "Animal Crossing: New Horizons", price: 1199, platform: "Nintendo Switch", image: "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000027619/9989957eae3a6b545194c42fec2071675c34aadacd65e6b33fdfe7b3b6a86c3a" },
+      { id: 105, title: "Pokémon Scarlet", price: 1299, platform: "Nintendo Switch", image: "https://assets.nintendo.com/image/upload/q_auto/f_auto/store/software/switch/70010000053966/849c234de8df7265201d26d9d72f88eed3f32438d3dca12fc135beb4c3befc85" },
+      { id: 106, title: "Super Smash Bros. Ultimate", price: 1199, platform: "Nintendo Switch", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFqDQgYRko4i4AIIvKT0ngFyEu3wVpBn664QAY2gmylUwT7UTKv6wT54Gs4MkQXSP479y3wvceuCS2yYKDeJNpdLe5hwLOJ2RnCL4HthCD&s=10" },
+      { id: 107, title: "Metroid Dread", price: 1099, platform: "Nintendo Switch", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDr9qoefL2tIBBzPOlAI2KObusGCUXk8kQtjaIFxtNQkmDjehNtdv4jqMNVsU4_JQbm8Yw8pAtIVCSF0tyxKoLofrrnTj1aFEz3CDpijE&s=10" },
+      { id: 108, title: "Kirby and the Forgotten Land", price: 1099, platform: "Nintendo Switch", image: "https://www.kontrolfreek.com/cdn/shop/articles/0_header_1024x1024.jpg?v=1647954461" },
+      { id: 109, title: "Splatoon 3", price: 1199, platform: "Nintendo Switch", image: "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000046395/4555efa9f2061f7d1e1646ab3d3af790a7491270b1b3e32e730273e9ac096827" },
+      { id: 110, title: "Luigi's Mansion 3", price: 999, platform: "Nintendo Switch", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUNS6m8dUDFLV8D8Yzyr_RYUeRAgpDSEQAqqKheoc8V2kVtY6B3APvNt1MlC0TZlkGoLhzoOHgpZReMZ3im95rmjeeh1b7giHu-ShJZMyX&s=10" },
+      { id: 111, title: "Fire Emblem Engage", price: 1199, platform: "Nintendo Switch", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMHkmPWINnmo2UAPWaZBQfcN1d3btKq3npcG5IqeqtwbB8Z9SDT8oTgSY0&s=10" },
+      { id: 112, title: "Xenoblade Chronicles 3", price: 1299, platform: "Nintendo Switch", image: "https://assets.nintendo.com/image/upload/q_auto/f_auto/store/software/switch/70010000053336/e933b48650b33b355e9cf2583da5c94b77180e40fb02d050041083dd62f4df39" },
+      { id: 113, title: "Bayonetta 3", price: 1099, platform: "Nintendo Switch", image: "https://www.nintendo.com/eu/media/images/10_share_images/games_15/nintendo_switch_4/2x1_NSwitch_Bayonetta3_image1600w.jpg" },
+      { id: 114, title: "Pikmin 4", price: 1099, platform: "Nintendo Switch", image: "https://assetsio.gnwcdn.com/pikmin4-big_thumb.png?width=1200&height=900&fit=crop&quality=100&format=png&enable=upscale&auto=webp" },
+      { id: 115, title: "The Legend of Zelda: Breath of the Wild", price: 1199, platform: "Nintendo Switch", image: "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000000025/7137262b5a64d921e193653f8aa0b722925abc5680380ca0e18a5cfd91697f58" },
+
+      // === PlayStation (con las nuevas imágenes) ===
+      { id: 201, title: "God of War Ragnarök", price: 999, platform: "PlayStation", image: "https://i.blogs.es/eadb27/1366_2000/1200_630.jpeg", onSale: true },
+      { id: 202, title: "Marvel's Spider-Man 2", price: 1499, platform: "PlayStation", image: "https://assets.nuuvem.com/image/upload/t_product_sharing_banner/v1/products/67866d6701aa3ecf48360a66/sharing_images/d516owvnfjatinwriz0f.jpg" },
+      { id: 203, title: "The Last of Us Part I", price: 1299, platform: "PlayStation", image: "https://image.api.playstation.com/vulcan/ap/rnd/202206/0720/0kRqUeSBIbQzz7cen3c989c6.jpg" },
+      { id: 204, title: "Horizon Forbidden West", price: 1199, platform: "PlayStation", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSp5Do7XM1OCnxipoJe9iOcs8wnF94u2xGTxFeNHnRD2gxNEmjsXDJS8fr5z8nAYU365BPHseIq_-mshMaIA1-PBTq3WTkwrQe2Cd0ZttFz&s=10" },
+      { id: 205, title: "Gran Turismo 7", price: 1299, platform: "PlayStation", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_lzbj99Iv7YJYxz6WivvrUJyk3o8wb6VtMRgm9tqlXg&s=10" },
+      { id: 206, title: "Ratchet & Clank: Rift Apart", price: 1199, platform: "PlayStation", image: "https://image.api.playstation.com/vulcan/ap/rnd/202101/2921/DwVjpbKOsFOyPdNzmSTSWuxG.png" },
+      { id: 207, title: "Returnal", price: 999, platform: "PlayStation", image: "https://assets.nuuvem.com/image/upload/v1/products/63c83bef3d78df0b183c62bf/sharing_images/fqcybo1vdzr4onx22fhu.jpg" },
+      { id: 208, title: "Demon's Souls", price: 1199, platform: "PlayStation", image: "https://image.api.playstation.com/vulcan/img/rnd/202011/1717/GemRaOZaCMhGxQ9dRhnQQyT5.png" },
+      { id: 209, title: "Final Fantasy XVI", price: 1399, platform: "PlayStation", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnJ8_jqP_KEF8KoKgrfXAPSDq6M9hCpJuobxEBqBabsZc_VywxQAOINmrAHj1_1LF4fd_7U_KiRI2hFjySVhYPbUhRiUS3l-B8XLyWaTmh&s=10" },
+      { id: 210, title: "Stellar Blade", price: 1399, platform: "PlayStation", image: "https://image.api.playstation.com/vulcan/ap/rnd/202401/2211/40e7cfd126a11fe5118310ebce6d9b3a23e7cabaca717217.png" },
+      { id: 211, title: "Astro Bot", price: 1199, platform: "PlayStation", image: "https://image.api.playstation.com/vulcan/ap/rnd/202406/0500/8f15268257b878597757fcc5f2c9545840867bc71fc863b1.png" },
+      { id: 212, title: "Ghost of Tsushima", price: 1099, platform: "PlayStation", image: "https://image.api.playstation.com/vulcan/ap/rnd/202010/0222/b3iB2zf2xHj9shC0XDTULxND.png" },
+      { id: 213, title: "Death Stranding Director's Cut", price: 899, platform: "PlayStation", image: "https://image.api.playstation.com/vulcan/ap/rnd/202106/2214/a8zjXIdTwKslJ2HvoJvY34a1.jpg" },
+      { id: 214, title: "Sackboy: A Big Adventure", price: 799, platform: "PlayStation", image: "https://image.api.playstation.com/vulcan/img/rnd/202010/1614/ZkPvfZf57Oi4Md5GaAlPTMoV.png" },
+      { id: 215, title: "Uncharted: Legacy of Thieves", price: 999, platform: "PlayStation", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvcxR0Snf7jZaaOnzhFUvKBN1Ay6EFWCdbHSehRq7bHQ&s=10" },
+
+      // Xbox
+      { id: 301, title: "Halo Infinite", price: 499, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1240440/header.jpg", onSale: true },
+      { id: 302, title: "Forza Horizon 5", price: 1199, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1551360/header.jpg" },
+      { id: 303, title: "Starfield", price: 1399, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1716740/header.jpg" },
+      { id: 304, title: "Microsoft Flight Simulator", price: 1299, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1250410/header.jpg" },
+      { id: 305, title: "Sea of Thieves", price: 799, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1172620/header.jpg" },
+      { id: 306, title: "Gears 5", price: 699, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1097840/header.jpg" },
+      { id: 307, title: "Ori and the Will of the Wisps", price: 599, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1057090/header.jpg" },
+      { id: 308, title: "Senua's Saga: Hellblade II", price: 1299, platform: "Xbox", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSx5W6v-MOSdj0JE6qn4gJnIvCzwH-xKhF6_lxJWJjkXg&s=10" },
+      { id: 309, title: "Age of Empires IV", price: 899, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1466860/header.jpg" },
+      { id: 310, title: "Grounded", price: 699, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/962130/header.jpg" },
+      { id: 311, title: "State of Decay 2", price: 499, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/495420/header.jpg" },
+      { id: 312, title: "Psychonauts 2", price: 799, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/607080/header.jpg" },
+      { id: 313, title: "Pentiment", price: 399, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1543060/header.jpg" },
+      { id: 314, title: "Hi-Fi Rush", price: 599, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1817230/header.jpg" },
+      { id: 315, title: "As Dusk Falls", price: 499, platform: "Xbox", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1341820/header.jpg" },
+
+      // Steam
+      { id: 401, title: "Elden Ring", price: 799, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg", onSale: true },
+      { id: 402, title: "Cyberpunk 2077", price: 499, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/header.jpg", onSale: true },
+      { id: 403, title: "Hollow Knight: Silksong", price: 259, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1030300/header.jpg", onSale: true },
+      { id: 404, title: "Red Dead Redemption 2", price: 899, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/header.jpg" },
+      { id: 405, title: "The Witcher 3: Wild Hunt", price: 499, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/292030/header.jpg" },
+      { id: 406, title: "Baldur's Gate 3", price: 1199, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg" },
+      { id: 407, title: "Hades II", price: 799, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/1145350/header.jpg" },
+      { id: 408, title: "Stardew Valley", price: 299, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/413150/header.jpg" },
+      { id: 409, title: "Hollow Knight", price: 249, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg" },
+      { id: 410, title: "Celeste", price: 199, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/504230/header.jpg" },
+      { id: 411, title: "Disco Elysium", price: 399, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/632470/header.jpg" },
+      { id: 412, title: "Portal 2", price: 99, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/620/header.jpg" },
+      { id: 413, title: "Half-Life: Alyx", price: 699, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/546560/header.jpg" },
+      { id: 414, title: "Dota 2", price: 0, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg" },
+      { id: 415, title: "Counter-Strike 2", price: 0, platform: "Steam", image: "https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg" }
+    ];
+
+    const getImage = (game) => {
+      if (game.image && game.image.length > 30) return game.image;
+      return `https://placehold.co/400x300/1a1a2e/7b2cbf?text=${encodeURIComponent((game.title || 'Juego').substring(0, 18))}`;
+    };
+
+    function formatCardNumber(value) {
+      const cleaned = value.replace(/\D/g, '').slice(0, 16);
+      return cleaned.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+    }
+
+    function App() {
+      const [view, setView] = useState('home');
+      const [platform, setPlatform] = useState('Todos');
+      const [cart, setCart] = useState([]);
+      const [user, setUser] = useState(null);
+      const [orders, setOrders] = useState([]);
+      const [carouselIndex, setCarouselIndex] = useState(0);
+
+      const [loginUser, setLoginUser] = useState('');
+      const [loginEmail, setLoginEmail] = useState('');
+      const [loginPass, setLoginPass] = useState('');
+      const [loginErrors, setLoginErrors] = useState({});
+
+      const [cardNumber, setCardNumber] = useState('');
+      const [expiry, setExpiry] = useState('');
+      const [cvv, setCvv] = useState('');
+      const [cardName, setCardName] = useState('');
+
+      useEffect(() => {
+        const timer = setInterval(() => setCarouselIndex(prev => (prev + 1) % CAROUSEL.length), 5000);
+        return () => clearInterval(timer);
+      }, []);
+
+      const filteredGames = platform === 'Todos' ? ALL_GAMES : ALL_GAMES.filter(g => g.platform === platform);
+
+      const addToCart = (game) => {
+        if (!user) {
+          alert('Debes iniciar sesión para agregar productos al carrito');
+          setView('login');
+          return;
+        }
+        setCart(prev => {
+          const exists = prev.find(item => item.id === game.id);
+          if (exists) return prev.map(item => item.id === game.id ? { ...item, qty: item.qty + 1 } : item);
+          return [...prev, { ...game, qty: 1 }];
+        });
+      };
+
+      const updateQty = (id, delta) => {
+        setCart(prev => prev.map(item => item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item).filter(item => item.qty > 0));
+      };
+      const removeFromCart = (id) => setCart(prev => prev.filter(item => item.id !== id));
+      const subtotal = cart.reduce((sum, item) => sum + (item.price || 0) * item.qty, 0);
+      const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+
+      const handlePay = () => {
+        const digits = cardNumber.replace(/\s/g, '');
+        if (digits.length !== 16) {
+          alert('El número de tarjeta debe tener exactamente 16 dígitos');
+          return;
+        }
+        if (!expiry || !cvv || !cardName) {
+          alert('Completa todos los campos de la tarjeta');
+          return;
+        }
+        alert('✅ Pago procesado correctamente\n\n¡Gracias por tu compra en GameLand!');
+        const newOrders = cart.map((item, i) => ({
+          id: `ORD-${Date.now() + i}`,
+          title: item.title,
+          date: new Date().toLocaleDateString('es-MX'),
+          status: 'proceso'
+        }));
+        setOrders(prev => [...newOrders, ...prev]);
+        setCart([]);
+        setCardNumber('');
+        setExpiry('');
+        setCvv('');
+        setCardName('');
+        setView('profile');
+      };
+
+      const validateLogin = () => {
+        const errs = {};
+        if (!loginUser.trim()) errs.user = 'El nombre de usuario es obligatorio';
+        if (!loginEmail.trim()) errs.email = 'El correo es obligatorio';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) errs.email = 'Correo inválido (debe contener @)';
+        if (!loginPass) errs.pass = 'La contraseña es obligatoria';
+        else if (loginPass.length < 8) errs.pass = 'La contraseña debe tener al menos 8 caracteres';
+        setLoginErrors(errs);
+        return Object.keys(errs).length === 0;
+      };
+
+      const handleLoginSubmit = (e) => {
+        e.preventDefault();
+        if (validateLogin()) {
+          setUser({ displayName: loginUser, email: loginEmail });
+          setLoginUser(''); setLoginEmail(''); setLoginPass('');
+          setLoginErrors({});
+          setView('profile');
+        }
+      };
+
+      const logout = () => {
+        setUser(null);
+        setLoginUser(''); setLoginEmail(''); setLoginPass('');
+        setLoginErrors({});
+        setView('home');
+      };
+
+      const goToAccount = () => {
+        if (user) setView('profile');
+        else {
+          setLoginUser(''); setLoginEmail(''); setLoginPass('');
+          setLoginErrors({});
+          setView('login');
+        }
+      };
+
+      return (
+        <>
+          <nav className="navbar">
+            <div className="logo" onClick={() => setView('home')}>
+              <i className="bi bi-controller" style={{fontSize: '2rem', color: '#00f5d4'}}></i>
+              <span className="logo-text">GameLand</span>
+            </div>
+            <div className="nav-links">
+              <button className={`nav-btn ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>
+                <i className="bi bi-house-door"></i> Inicio
+              </button>
+              <button className={`nav-btn ${view === 'games' ? 'active' : ''}`} onClick={() => setView('games')}>
+                <i className="bi bi-joystick"></i> Juegos
+              </button>
+              <button className={`nav-btn ${view === 'cart' || view === 'payment' ? 'active' : ''}`} onClick={() => setView('cart')}>
+                <i className="bi bi-cart3"></i> Carrito
+                {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+              </button>
+              <button className={`nav-btn ${view === 'profile' || view === 'login' ? 'active' : ''}`} onClick={goToAccount}>
+                <i className="bi bi-person-circle"></i> {user ? 'Mi Cuenta' : 'Cuenta'}
+              </button>
+            </div>
+          </nav>
+
+          <main className="container">
+            {view === 'login' && (
+              <div className="login-container">
+                <div className="login-card">
+                  <h2>Iniciar Sesión</h2>
+                  <form onSubmit={handleLoginSubmit}>
+                    <label>Nombre de Usuario</label>
+                    <input type="text" placeholder="Nombre" value={loginUser} onChange={e => setLoginUser(e.target.value)} />
+                    {loginErrors.user && <div className="error-text">{loginErrors.user}</div>}
+
+                    <label>E-mail</label>
+                    <input type="email" placeholder="Correo electrónico" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
+                    {loginErrors.email && <div className="error-text">{loginErrors.email}</div>}
+
+                    <label>Contraseña</label>
+                    <input type="password" placeholder="Mínimo 8 caracteres" value={loginPass} onChange={e => setLoginPass(e.target.value)} />
+                    {loginErrors.pass && <div className="error-text">{loginErrors.pass}</div>}
+
+                    <button type="submit" className="btn-login">Iniciar Sesión</button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {view === 'home' && (
+              <>
+                <div className="carousel">
+                  {CAROUSEL.map((slide, i) => (
+                    <div key={i} className={`carousel-slide ${i === carouselIndex ? 'active' : ''}`}
+                      style={{ backgroundImage: `url(${slide.image})` }}>
+                      <div className="carousel-content">
+                        <h2>{slide.title}</h2>
+                        <p>{slide.desc}</p>
+                        <button className="carousel-btn" onClick={() => setView(i === 0 ? 'home' : 'games')}>{slide.btn}</button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="carousel-dots">
+                    {CAROUSEL.map((_, i) => (
+                      <div key={i} className={`dot ${i === carouselIndex ? 'active' : ''}`} onClick={() => setCarouselIndex(i)} />
+                    ))}
+                  </div>
+                </div>
+
+                <h1 className="section-title"><i className="bi bi-tag-fill" style={{color:'#f72585'}}></i> Ofertas Destacadas</h1>
+                <div className="offers-grid">
+                  {OFFERS.map(offer => (
+                    <div key={offer.id} className="offer-card">
+                      <img className="offer-img" src={getImage(offer)} alt={offer.title}
+                        onError={e => e.target.src = `https://placehold.co/400x200/1a1a2e/7b2cbf?text=${encodeURIComponent(offer.title.substring(0,15))}`} />
+                      <div className="offer-body">
+                        <div className="offer-platform">
+                          <i className="bi bi-controller"></i> {offer.platform}
+                          <span style={{marginLeft:8, color:'#4ade80'}}>✓ In stock</span>
+                          <span style={{marginLeft:8, color:'#60a5fa'}}>✓ Digital</span>
+                        </div>
+                        <div className="offer-title">{offer.title}</div>
+                        <div className="price-row">
+                          <span className="old-price">${offer.oldPrice}</span>
+                          <span className="discount">-{offer.discount}%</span>
+                          <span className="new-price">${offer.newPrice}</span>
+                        </div>
+                        <button className="btn-offer" onClick={() => addToCart({...offer, price: offer.newPrice})}>
+                          <i className="bi bi-cart-plus"></i> Add to cart
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <h1 className="section-title"><i className="bi bi-calendar-event" style={{color:'#00f5d4'}}></i> Próximamente</h1>
+                <div className="upcoming-grid">
+                  {UPCOMING.map(game => (
+                    <div key={game.id} className="upcoming-card">
+                      <img className="upcoming-img" src={game.image} alt={game.title}
+                        onError={e => e.target.src = `https://placehold.co/400x240/1a1a2e/7b2cbf?text=${encodeURIComponent(game.title.substring(0,15))}`} />
+                      <div className="upcoming-body">
+                        <div className="upcoming-date">{game.date}</div>
+                        <div style={{fontWeight:600}}>{game.title}</div>
+                        <div style={{fontSize:'0.85rem', color:'#aaa', marginTop:4}}>{game.platform}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="faq-section">
+                  <h2 style={{marginBottom:'1.5rem'}}><i className="bi bi-question-circle"></i> Contacto / Preguntas frecuentes</h2>
+                  <div className="faq-item">
+                    <h3>¿Cómo descargo mi juego después de comprarlo?</h3>
+                    <p>Una vez confirmado el pago recibirás un correo con el enlace de descarga digital. También aparecerá en “Mis compras” de tu cuenta.</p>
+                  </div>
+                  <div className="faq-item">
+                    <h3>¿Los precios incluyen IVA?</h3>
+                    <p>Sí, todos los precios mostrados ya incluyen impuestos.</p>
+                  </div>
+                  <div className="faq-item">
+                    <h3>¿Puedo pedir reembolso?</h3>
+                    <p>Tienes 14 días para solicitar reembolso siempre que no hayas descargado el juego más de una vez.</p>
+                  </div>
+                  <div className="faq-item">
+                    <h3>Contacto</h3>
+                    <p>Email: soporte@gameland.mx<br/>Horario: Lunes a Viernes 9:00 – 18:00 (hora Ciudad de México)</p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {view === 'games' && (
+              <>
+                <h1 className="section-title"><i className="bi bi-joystick"></i> Catálogo de Juegos</h1>
+                <div className="platforms">
+                  {['Todos', 'Nintendo Switch', 'PlayStation', 'Xbox', 'Steam'].map(p => (
+                    <button key={p} className={`platform-btn ${platform === p ? 'active' : ''}`} onClick={() => setPlatform(p)}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
+                <div className="games-grid">
+                  {filteredGames.map(game => (
+                    <div key={game.id} className="game-card">
+                      <img className="game-img" src={getImage(game)} alt={game.title}
+                        onError={e => e.target.src = `https://placehold.co/400x300/1a1a2e/7b2cbf?text=${encodeURIComponent(game.title.substring(0,18))}`} />
+                      <div className="game-info">
+                        <div className="game-title">{game.title}</div>
+                        <div className="game-price">
+                          {game.price === 0 ? 'Gratuito' : `$${game.price.toLocaleString('es-MX')}`}
+                          {game.onSale && <span style={{marginLeft:8, background:'#f72585', color:'white', padding:'2px 6px', borderRadius:4, fontSize:12}}>Oferta</span>}
+                        </div>
+                        <button className="btn-add" onClick={() => addToCart(game)}>
+                          <i className="bi bi-cart-plus"></i> Agregar al carrito
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {view === 'cart' && (
+              <>
+                <h1 className="section-title"><i className="bi bi-cart3"></i> Mi Carrito</h1>
+                {cart.length === 0 ? (
+                  <div className="cart-empty">
+                    <i className="bi bi-cart-x" style={{fontSize:'4rem', opacity:0.3}}></i>
+                    <p>Tu carrito está vacío</p>
+                    <button className="btn-add" style={{maxWidth:250, margin:'1.5rem auto'}} onClick={() => setView('games')}>Explorar juegos</button>
+                  </div>
+                ) : (
+                  <>
+                    {cart.map(item => (
+                      <div key={item.id} className="cart-item">
+                        <img src={getImage(item)} alt={item.title} onError={e => e.target.src = `https://placehold.co/90x90/1a1a2e/7b2cbf?text=Game`} />
+                        <div className="cart-details">
+                          <div className="game-title">{item.title}</div>
+                          <div style={{color:'#aaa', fontSize:'0.9rem'}}>Precio unitario: ${item.price}</div>
+                          <div className="qty-controls">
+                            <button className="qty-btn" onClick={() => updateQty(item.id, -1)}>−</button>
+                            <span>{item.qty}</span>
+                            <button className="qty-btn" onClick={() => updateQty(item.id, 1)}>+</button>
+                          </div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontWeight:700, color:'var(--secondary)'}}>${item.price * item.qty}</div>
+                          <button className="remove-btn" onClick={() => removeFromCart(item.id)}><i className="bi bi-trash"></i></button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="cart-summary">
+                      <div className="summary-row"><span>Subtotal ({totalItems} productos)</span><span>${subtotal}</span></div>
+                      <div className="summary-row total-row"><span>Total</span><span>${subtotal}</span></div>
+                      <button className="btn-checkout" onClick={() => setView('payment')}>Proceder al pago</button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {view === 'payment' && (
+              <>
+                <h1 className="section-title"><i className="bi bi-credit-card"></i> Pago con Tarjeta</h1>
+                <div className="payment-form">
+                  <div className="form-group">
+                    <label>Número de tarjeta</label>
+                    <input
+                      type="text"
+                      value={cardNumber}
+                      onChange={e => setCardNumber(formatCardNumber(e.target.value))}
+                      placeholder="1234 5678 9012 3456"
+                      maxLength="19"
+                    />
+                  </div>
+                  <div style={{display:'flex', gap:'1rem'}}>
+                    <div className="form-group" style={{flex:1}}>
+                      <label>Fecha (MM/AA)</label>
+                      <input
+                        type="text"
+                        value={expiry}
+                        onChange={e => {
+                          let v = e.target.value.replace(/\D/g, '').slice(0,4);
+                          if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+                          setExpiry(v);
+                        }}
+                        placeholder="12/28"
+                        maxLength="5"
+                      />
+                    </div>
+                    <div className="form-group" style={{flex:1}}>
+                      <label>CVV</label>
+                      <input
+                        type="text"
+                        value={cvv}
+                        onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0,4))}
+                        placeholder="123"
+                        maxLength="4"
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Nombre del titular</label>
+                    <input
+                      type="text"
+                      value={cardName}
+                      onChange={e => setCardName(e.target.value)}
+                      placeholder="Nombre completo"
+                    />
+                  </div>
+                  <div style={{margin:'1.5rem 0', fontSize:'1.2rem', textAlign:'center'}}>
+                    Total a pagar: <strong style={{color:'var(--secondary)'}}>${subtotal}</strong>
+                  </div>
+                  <button className="btn-pay" onClick={handlePay}>
+                    Pagar ${subtotal}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {view === 'profile' && (
+              <>
+                <h1 className="section-title"><i className="bi bi-person"></i> Mi Cuenta</h1>
+                <div className="profile-card">
+                  {user ? (
+                    <>
+                      <div style={{fontSize:60, marginBottom:10}}><i className="bi bi-person-circle"></i></div>
+                      <h2>{user.displayName}</h2>
+                      <p style={{color:'#aaa'}}>{user.email}</p>
+                      <button className="btn-add" style={{maxWidth:200, margin:'1.5rem auto', background:'#333'}} onClick={logout}>
+                        Cerrar sesión
+                      </button>
+                    </>
+                  ) : <p>No has iniciado sesión</p>}
+                </div>
+                {user && (
+                  <div style={{marginTop:'2.5rem'}}>
+                    <h2 style={{marginBottom:'1rem'}}>Mis compras y seguimiento</h2>
+                    {orders.length === 0 ? <p style={{color:'#888'}}>Aún no tienes compras</p> :
+                      orders.map(order => (
+                        <div key={order.id} className="order-item">
+                          <div>
+                            <strong>{order.title}</strong>
+                            <div style={{fontSize:'0.85rem', color:'#888'}}>{order.id} • {order.date}</div>
+                          </div>
+                          <span className="status proceso">{order.status === 'proceso' ? 'Procesando' : order.status}</span>
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
+              </>
+            )}
+          </main>
+
+          <footer>
+            <div className="footer-links">
+              <a href="#">Términos</a><a href="#">Privacidad</a><a href="#">Soporte</a><a href="#">Contacto</a>
+            </div>
+            <p style={{color:'#666', fontSize:'0.9rem'}}>© 2026 GameLand — Tienda digital de videojuegos</p>
+          </footer>
+        </>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
